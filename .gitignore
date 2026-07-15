@@ -1,0 +1,14 @@
+# macOS AppleDouble / resource-fork junk
+._*
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editor / OS cruft
+*.swp
+*~
+
+# Build output (if a bundler is added later)
+dist/
