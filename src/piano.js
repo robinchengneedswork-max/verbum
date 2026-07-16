@@ -26,6 +26,7 @@ let fBtDuplicateWord='';
 let fBtStartIdx=-1;
 let fBtEndIdx=-1;
 let fBtPendingHits=[];
+let fDeadeyeResolving=false;
 
 // Galaga helpers
 function clearGalagaShots(){const layer=document.getElementById('galaga-shot-layer');if(layer)layer.innerHTML='';}
@@ -125,7 +126,7 @@ function loadVerse(){
   applyMasteryCFG(_mastery);
   const rawWords=verse.text.split(' ');
   fWords=_mastery==='mastered'?applyWordTruncation(rawWords,verse.ref):rawWords;
-  fWordIdx=0;fErrors=0;fCombo=1;sfxKeyShift=0;fLastCorrectLane=-1;fBtStartIdx=-1;fBtEndIdx=-1;fBtEntering=false;
+  fWordIdx=0;fErrors=0;fCombo=1;sfxKeyShift=0;fLastCorrectLane=-1;fBtStartIdx=-1;fBtEndIdx=-1;fBtEntering=false;fDeadeyeResolving=false;
   updateComboMult(1);if(fBulletTime)exitBulletTime();
   fLanes=buildConstrainedLanes(fWords.length,CFG.ncols);
   document.getElementById('fg-ref').textContent='\u2014 '+verse.ref;
@@ -233,6 +234,7 @@ function exitBulletTime(){if(!fBulletTime)return;fBulletTime=false;fBtEntering=f
 
 function deadeyeEnd(allCleared){
   const windowStart=fBtStartIdx;const windowEnd=fBtEndIdx;exitBulletTime();cancelAnimationFrame(fRafId);fRafId=null;
+  fDeadeyeResolving=true;   // block taps until the staggered payoff finishes (else colTap desyncs fWordIdx)
   const windowTiles=[];for(let ci=0;ci<fTiles.length;ci++){fTiles[ci].filter(t=>t.globalIdx>=windowStart&&t.globalIdx<=windowEnd).forEach(t=>{windowTiles.push({ci,tile:t});});}
   windowTiles.sort((a,b)=>a.tile.globalIdx-b.tile.globalIdx);
   let delay=0;const hitSet=new Set(fBtPendingHits.map(t=>t.globalIdx));
@@ -252,7 +254,7 @@ function deadeyeEnd(allCleared){
       }
     },delay);delay+=80;
   });
-  setTimeout(()=>{fWordIdx=fBtEndIdx+1;updateFStreak();if(fHearts<=0){showFailOverlay();return;}if(fWordIdx>=fWords.length){showVerseDone();return;}fLastTime=performance.now();fRafId=requestAnimationFrame(rafLoop);},delay+120);
+  setTimeout(()=>{fDeadeyeResolving=false;fWordIdx=fBtEndIdx+1;updateFStreak();if(fHearts<=0){showFailOverlay();return;}if(fWordIdx>=fWords.length){showVerseDone();return;}fLastTime=performance.now();fRafId=requestAnimationFrame(rafLoop);},delay+120);
 }
 
 function tileBulletTap(tile){
@@ -274,7 +276,7 @@ function tileBulletTap(tile){
 }
 
 function colTap(ci){
-  resumeAC();if(fBulletTime)return;moveGalagaShipToLane(ci,false);glowCol(ci,'active');
+  resumeAC();if(fBulletTime||fDeadeyeResolving)return;moveGalagaShipToLane(ci,false);glowCol(ci,'active');
   const laneTiles=fTiles[ci].filter(t=>!t.hit);if(!laneTiles.length)return;
   const hotTile=laneTiles[0];const target=fWords[fWordIdx];
   if(hotTile.word===target){
@@ -343,7 +345,7 @@ function showAllDone(){
 
 function redoVerse(){hapTap();document.getElementById('fg-done').classList.remove('show');document.getElementById('fg-fail').style.display='none';fHearts=Math.min(5,fHearts+2);sfxNoteIdx=0;loadVerse();}
 function flowNextVerse(){hapTap();G.flowOrderIdx++;document.getElementById('fg-done').classList.remove('show');sfxNoteIdx=0;updateFProg();loadVerse();}
-function endFlow(){if(fBtRafId){cancelAnimationFrame(fBtRafId);fBtRafId=null;}fBulletTime=false;if(fRafId){cancelAnimationFrame(fRafId);fRafId=null;}clearGalagaShots();document.getElementById('flow-game').style.display='none';document.getElementById('fg-fail').style.display='none';const dz=document.getElementById('fg-devzone');if(dz)dz.style.display='none';renderFlowMenu();}
+function endFlow(){if(fBtRafId){cancelAnimationFrame(fBtRafId);fBtRafId=null;}fBulletTime=false;fDeadeyeResolving=false;if(fRafId){cancelAnimationFrame(fRafId);fRafId=null;}clearGalagaShots();document.getElementById('flow-game').style.display='none';document.getElementById('fg-fail').style.display='none';const dz=document.getElementById('fg-devzone');if(dz)dz.style.display='none';renderFlowMenu();}
 
 // ── Keyboard input ──
 document.addEventListener('keydown',(e)=>{

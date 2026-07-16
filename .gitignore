@@ -10,5 +10,8 @@ desktop.ini
 *.swp
 *~
 
+# Source docs (not part of the deployable app)
+*.docx
+
 # Build output (if a bundler is added later)
 dist/

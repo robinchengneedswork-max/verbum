@@ -201,7 +201,8 @@ body{color:#F5E6C8;font-family:Georgia,serif}
 .gacha-back-pattern{font-size:64px;opacity:0.18;user-select:none;}
 .gacha-back::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,0.08) 50%,transparent 60%);animation:gachaBackShimmer 2.2s ease infinite;}
 @keyframes gachaBackShimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
-.gacha-front{background:linear-gradient(135deg,#1A0F00,#2C1A00);border:3px solid #C9A84C;transform:rotateY(180deg);position:absolute;top:0;left:0;right:0;}
+.gacha-front{background:linear-gradient(135deg,#1A0F00,#2C1A00);border:3px solid #C9A84C;transform:rotateY(180deg);position:absolute;top:0;left:0;right:0;opacity:0;}
+.gacha-front.revealed{opacity:1;}
 .gacha-glow{position:absolute;inset:0;border-radius:15px;opacity:0;pointer-events:none;transition:opacity 0.4s;}
 .gacha-front.revealed .gacha-glow{opacity:1;}
 @keyframes gachaSlam{0%{transform:translateY(-120px) scale(1.15);opacity:0;}60%{transform:translateY(6px) scale(0.97);opacity:1;}80%{transform:translateY(-3px) scale(1.01);}100%{transform:translateY(0) scale(1);}}
