@@ -103,7 +103,7 @@ function echoListen(){
 function echoYourTurn(){
   E.phase='echo';
   document.getElementById('eg-status').textContent='👉 Your turn — tap in order';
-  E.bank=shuffle(E.seq.map(gi=>({gi})));
+  E.bank=shuffle(E.seq.map(gi=>({gi,used:false})));
   echoRenderProgress();echoRenderBank();
 }
 
@@ -119,20 +119,23 @@ function echoRenderProgress(){
 function echoRenderBank(){
   const bank=document.getElementById('eg-bank');bank.innerHTML='';
   E.bank.forEach(item=>{
-    const b=document.createElement('button');b.className='chip echo-chip';b.textContent=E.words[item.gi];
-    b.onclick=()=>echoTap(item);bank.appendChild(b);
+    const b=document.createElement('button');b.className='chip echo-chip'+(item.used?' used':'');
+    b.textContent=E.words[item.gi];b.disabled=!!item.used;
+    b.onclick=()=>echoTap(item);item.el=b;bank.appendChild(b);
   });
 }
 
 function echoTap(item){
-  if(!E||E.phase!=='echo')return;resumeAC();
+  if(!E||E.phase!=='echo'||!item||item.used)return;resumeAC();
   const expectedGi=E.seq[E.tapPos];
   // Match on word text (not gi) so duplicate words anywhere in the chain accept
   // any matching chip; the note played is the position's note → tune stays true.
   if(E.words[item.gi]===E.words[expectedGi]){
+    // Chips stay put — mark the tapped one used (greyed) rather than removing it,
+    // so the bank never reflows and tap targets don't jump between presses.
+    item.used=true;if(item.el){item.el.classList.add('used');item.el.disabled=true;}
     echoPlayNote(expectedGi,0);hapCorrect();
-    E.bank=E.bank.filter(x=>x!==item);E.tapPos++;
-    echoRenderProgress();echoRenderBank();
+    E.tapPos++;echoRenderProgress();
     if(E.tapPos>=E.seq.length)echoRoundComplete();
   }else{
     E.errors++;sfxWrong();hapWrong();

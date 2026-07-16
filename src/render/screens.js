@@ -163,6 +163,7 @@ function renderSR(){
   renderSRSubTabs();
   if(srSubView==='cram'){showSRSection('cram');renderCram();return;}
   if(srSubView==='browse'){showSRSection('browse');renderBrowse();return;}
+  if(srSubView==='vanish'){showSRSection('vanish');renderVanishCards();return;}
   showSRSection('review');
   const now=Date.now();
   document.getElementById('sr-due-count').textContent=G.srCards.filter(c=>c.due<=now).length;
@@ -179,7 +180,7 @@ function renderSR(){
 // Sub-view switcher (Review | Cram | Browse)
 function renderSRSubTabs(){
   const el=document.getElementById('sr-subtabs');if(!el)return;
-  const views=[['review','Review'],['cram','Cram'],['browse','Browse']];
+  const views=[['review','Review'],['cram','Cram'],['browse','Browse'],['vanish','Vanish']];
   el.innerHTML=views.map(([v,l])=>`<div class="sr-subtab${srSubView===v?' on':''}" onclick="setSRSubView('${v}')">${l}</div>`).join('');
 }
 function setSRSubView(v){if(srSubView===v)return;srSubView=v;cramSession=null;renderSR();}
@@ -187,6 +188,7 @@ function showSRSection(which){
   document.getElementById('sr-review-wrap').style.display=which==='review'?'block':'none';
   document.getElementById('sr-cram-wrap').style.display=which==='cram'?'block':'none';
   document.getElementById('sr-browse-wrap').style.display=which==='browse'?'block':'none';
+  const vw=document.getElementById('sr-vanish-wrap');if(vw)vw.style.display=which==='vanish'?'block':'none';
 }
 
 // Mode picker (recall mode) — switching reloads presentation without rating.

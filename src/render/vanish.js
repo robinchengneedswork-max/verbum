@@ -38,10 +38,14 @@ function vvBuildRounds(n){
   return out;
 }
 
-function renderVanish(body,verse){
+// onDone (optional): completion callback. Omitted → the lesson reward path
+// (lResult) runs; the Cards-tab entry passes its own callback so the drill can
+// run standalone outside a lesson. body is remembered for re-renders (input
+// toggle, round advance) so it works in any container, not just #lbody.
+function renderVanish(body,verse,onDone){
   resumeAC();
   const words=verse.text.split(' '); // tokenize like Flow: punctuation stays attached
-  VV={verse,words,order:vvBuildOrder(words),rounds:vvBuildRounds(words.length),round:0,perfect:true};
+  VV={verse,words,order:vvBuildOrder(words),rounds:vvBuildRounds(words.length),round:0,perfect:true,body,onDone};
   vvRenderRound(body);
 }
 
@@ -49,7 +53,7 @@ function renderVanish(body,verse){
 function vvBlanked(){return new Set(VV.order.slice(0,VV.rounds[VV.round]));}
 
 function vvRenderRound(body){
-  body=body||document.getElementById('lbody');
+  body=body||(VV&&VV.body)||document.getElementById('lbody');
   const blanks=vvBlanked();
   const pct=Math.round(VV.rounds[VV.round]/VV.words.length*100);
   let dots='';VV.rounds.forEach((_,i)=>{dots+=`<div class="vv-rdot${i<VV.round?' done':i===VV.round?' cur':''}"></div>`;});
@@ -148,11 +152,46 @@ function vvAdvance(){
   VV.round++;
   if(VV.round>=VV.rounds.length){
     sfxCorrect();hapComplete();
-    const body=document.getElementById('lbody');body.innerHTML='';
+    const body=(VV&&VV.body)||document.getElementById('lbody');body.innerHTML='';
     const e=document.createElement('div');e.style.cssText='text-align:center;font-size:34px;margin:10px 0';e.textContent='🌟';
     body.appendChild(e);
-    setTimeout(()=>lResult(true),750); // drill complete — always a pass (self-checking / honor drill)
+    const done=(VV&&VV.onDone)||(()=>lResult(true));
+    setTimeout(done,750); // drill complete — always a pass (self-checking / honor drill)
     return;
   }
   vvRenderRound();
+}
+
+// ── Cards-tab entry: the fade drill as a standalone practice surface ──
+// (the lesson tab is gone, so Vanishing lives here now). Practice only — no
+// XP/coins, consistent with Cram; switching subtabs resets to the picker.
+function renderVanishCards(){
+  const wrap=document.getElementById('sr-vanish-wrap');if(!wrap)return;
+  const col=activeCollection();
+  const badgeColors={learning:'#A8E063',practicing:'#FFD700',mastered:'#56CCF2'};
+  let rows='';
+  col.verses.forEach(v=>{
+    if(isBossVerse(v))return;
+    const level=verseMastery(v.ref);
+    rows+=`<div class="browse-row" onclick="startVanishCard('${v.ref}')">
+      <div class="browse-row-top"><span class="browse-ref">${v.ref}</span><span class="vitem-mastery ${level}" style="color:${badgeColors[level]}">${level.toUpperCase()}</span></div>
+      <div class="browse-text" style="display:block;font-size:9px;color:#6A5030;margin-top:3px">${v.text.slice(0,58)}…</div></div>`;
+  });
+  wrap.innerHTML=`<div class="cram-hint">Fade drill — words vanish round by round until you rebuild the whole verse. Practice only.</div>
+    <div class="secLabel">CHOOSE A VERSE</div><div class="browse-list">${rows}</div>`;
+}
+function startVanishCard(ref){
+  const verse=VERSES.find(v=>v.ref===ref);if(!verse)return;
+  hapTap();
+  renderVanish(document.getElementById('sr-vanish-wrap'),verse,()=>vanishCardDone(ref));
+}
+function vanishCardDone(ref){
+  const wrap=document.getElementById('sr-vanish-wrap');if(!wrap)return;
+  const perfect=VV&&VV.perfect;
+  wrap.innerHTML=`<div style="text-align:center;padding:18px 12px">
+    <div style="font-size:40px;margin-bottom:9px">${perfect?'🌟':'🌫️'}</div>
+    <div style="font-size:18px;color:#C9A84C;font-weight:700;margin-bottom:4px">${perfect?'Flawless recall!':'Drill complete'}</div>
+    <div style="font-size:10px;color:#9A7A3F">practice — doesn't affect your schedule</div>
+    <div style="margin-top:14px"><button class="btn" onclick="startVanishCard('${ref}')">↺ Again</button>
+    <button class="btn btn-ghost mt8" onclick="renderVanishCards()" style="margin-top:6px">Back to list</button></div></div>`;
 }

@@ -596,9 +596,10 @@ body.nyan-skin #fg-piano::after{content:'';position:absolute;left:0;right:0;bott
 .echo-word.active{background:#FFD700;color:#1A0F00;transform:scale(1.15);box-shadow:0 0 12px rgba(255,215,0,0.53)}
 .echo-word.lit{background:#2A1800;color:#C9A84C}
 .echo-slot{display:inline-block;color:#5A4020}
-#eg-bank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.echo-chip{background:#2A1A00;border-color:#9A7A3F;color:#C9A84C;font-size:13px;padding:6px 11px}
+#eg-bank{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;padding:0 2px}
+.echo-chip{background:#2A1A00;border-color:#9A7A3F;color:#C9A84C;font-size:15px;padding:12px 16px;min-width:66px;border-radius:9px;transition:opacity 0.15s,background 0.1s}
 .echo-chip:active{background:#3A2500}
+.echo-chip.used{opacity:0.28;color:#7A5C2A;border-color:#4A3410;background:#160D00;pointer-events:none}
 .echo-shake{animation:vvShake 0.4s}
 #eg-done{text-align:center;padding:10px}
 .eg-done-icon{font-size:40px;margin-bottom:6px}
