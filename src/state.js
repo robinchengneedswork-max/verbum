@@ -82,6 +82,9 @@ const CFG={
   keyChangeStreak:7,
   srMode:'ref2text',
   srNewPerDay:6,
+  vvInput:'fill',
+  vvRounds:4,
+  vvSchedule:[0.25,0.5,0.75,1],
 };
 
 function normalizeConfig(){
@@ -101,6 +104,10 @@ function normalizeConfig(){
   CFG.devMode=typeof CFG.devMode==='boolean'?CFG.devMode:false;
   CFG.srMode=['ref2text','text2ref','firstletter'].includes(CFG.srMode)?CFG.srMode:'ref2text';
   CFG.srNewPerDay=Number.isFinite(+CFG.srNewPerDay)?Math.min(50,Math.max(0,Math.round(+CFG.srNewPerDay))):6;
+  CFG.vvInput=['fill','recite'].includes(CFG.vvInput)?CFG.vvInput:'fill';
+  CFG.vvRounds=Number.isFinite(+CFG.vvRounds)?Math.min(6,Math.max(1,Math.round(+CFG.vvRounds))):4;
+  CFG.vvSchedule=Array.isArray(CFG.vvSchedule)&&CFG.vvSchedule.length?CFG.vvSchedule.map(Number).filter(x=>x>0&&x<=1).sort((a,b)=>a-b):[0.25,0.5,0.75,1];
+  if(!CFG.vvSchedule.length)CFG.vvSchedule=[0.25,0.5,0.75,1];
 }
 
 // Utility

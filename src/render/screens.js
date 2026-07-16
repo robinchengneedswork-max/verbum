@@ -46,8 +46,8 @@ function renderVList(id,fn){
 }
 
 // ── LESSON ──
-const MODES=["read","fill","tap","choice"];
-const MLABELS={read:"\ud83d\udcd6 Read",fill:"\u270f\ufe0f Fill",tap:"\ud83e\udde9 Arrange",choice:"\ud83c\udfaf Reference"};
+const MODES=["read","fill","tap","vanish","choice"];
+const MLABELS={read:"\ud83d\udcd6 Read",fill:"\u270f\ufe0f Fill",tap:"\ud83e\udde9 Arrange",vanish:"\ud83c\udf2b\ufe0f Vanish",choice:"\ud83c\udfaf Reference"};
 let tapSel=[],tapBank=[],lcDone=false;
 
 function renderLessonStart(){
@@ -70,6 +70,7 @@ function renderStep(){
   if(mode==='read')renderRead(body,verse);
   if(mode==='fill')renderFill(body,verse);
   if(mode==='tap')renderTap(body,verse);
+  if(mode==='vanish')renderVanish(body,verse);
   if(mode==='choice')renderLC(body,verse);
 }
 function lResult(ok){
