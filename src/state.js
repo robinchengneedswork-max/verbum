@@ -85,6 +85,9 @@ const CFG={
   vvInput:'fill',
   vvRounds:4,
   vvSchedule:[0.25,0.5,0.75,1],
+  echoChunkSize:4,
+  echoMaxChainWords:8,
+  echoTempoMs:380,
 };
 
 function normalizeConfig(){
@@ -108,6 +111,9 @@ function normalizeConfig(){
   CFG.vvRounds=Number.isFinite(+CFG.vvRounds)?Math.min(6,Math.max(1,Math.round(+CFG.vvRounds))):4;
   CFG.vvSchedule=Array.isArray(CFG.vvSchedule)&&CFG.vvSchedule.length?CFG.vvSchedule.map(Number).filter(x=>x>0&&x<=1).sort((a,b)=>a-b):[0.25,0.5,0.75,1];
   if(!CFG.vvSchedule.length)CFG.vvSchedule=[0.25,0.5,0.75,1];
+  CFG.echoChunkSize=Number.isFinite(+CFG.echoChunkSize)?Math.min(8,Math.max(1,Math.round(+CFG.echoChunkSize))):4;
+  CFG.echoMaxChainWords=Number.isFinite(+CFG.echoMaxChainWords)?Math.min(16,Math.max(2,Math.round(+CFG.echoMaxChainWords))):8;
+  CFG.echoTempoMs=Number.isFinite(+CFG.echoTempoMs)?Math.min(1000,Math.max(150,Math.round(+CFG.echoTempoMs))):380;
 }
 
 // Utility

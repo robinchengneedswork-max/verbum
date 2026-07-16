@@ -4,6 +4,7 @@
 
 function switchTab(t){
   resumeAC();
+  if(typeof echoTeardown==='function')echoTeardown(); // stop Echo audio/timers when leaving Flow
   document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');

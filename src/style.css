@@ -582,3 +582,26 @@ body.nyan-skin #fg-piano::after{content:'';position:absolute;left:0;right:0;bott
 .vv-grade-row .btn{flex:1;margin:0}
 @keyframes vvFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @keyframes vvShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+/* ── Echo (call-and-response melody mode) ── */
+#echo-game{flex:1;flex-direction:column;padding:10px 12px;overflow-y:auto}
+#eg-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+#eg-back{background:none;border:none;color:#C9A84C;font-size:20px;cursor:pointer;padding:0 4px}
+#eg-progbar{flex:1;height:5px;background:#1A1200;border-radius:3px;overflow:hidden}
+#eg-progfill{height:100%;width:0;background:linear-gradient(90deg,#C9A84C,#FFD700);transition:width 0.3s}
+#eg-seg{font-size:9px;color:#9A7A3F;white-space:nowrap}
+#eg-ref{text-align:center;font-size:11px;color:#C9A84C;margin-bottom:4px}
+#eg-status{text-align:center;font-size:12px;color:#E8D5A0;min-height:18px;margin-bottom:10px}
+#eg-stage{text-align:center;line-height:2.4;font-size:15px;font-family:Georgia,serif;min-height:44px;margin-bottom:14px;color:#7A5C2A}
+.echo-word{display:inline-block;padding:2px 5px;border-radius:6px;color:#E8D5A0;transition:all 0.12s}
+.echo-word.active{background:#FFD700;color:#1A0F00;transform:scale(1.15);box-shadow:0 0 12px rgba(255,215,0,0.53)}
+.echo-word.lit{background:#2A1800;color:#C9A84C}
+.echo-slot{display:inline-block;color:#5A4020}
+#eg-bank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.echo-chip{background:#2A1A00;border-color:#9A7A3F;color:#C9A84C;font-size:13px;padding:6px 11px}
+.echo-chip:active{background:#3A2500}
+.echo-shake{animation:vvShake 0.4s}
+#eg-done{text-align:center;padding:10px}
+.eg-done-icon{font-size:40px;margin-bottom:6px}
+.eg-done-title{font-size:16px;color:#C9A84C;font-weight:700;margin-bottom:4px}
+.eg-done-sub{font-size:11px;color:#9A7A3F;margin-bottom:10px}
+.eg-done-verse{font-size:12px;color:#E8D5A0;font-style:italic;line-height:1.5;margin-bottom:14px;font-family:Georgia,serif}
