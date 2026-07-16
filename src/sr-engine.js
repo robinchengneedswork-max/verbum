@@ -63,14 +63,21 @@ function bossVerseUnlocked(verse){
   return constituentRefs.every(ref=>verseMastery(ref)==='mastered');
 }
 
+// Book portion of a ref, e.g. "Ephesians 3:16-21" -> "Ephesians", "1 Samuel 12:23" -> "1 Samuel"
+function verseBook(ref){
+  return ref.replace(/\s+\d+:\d+(?:-\d+)?[ab]?$/,'').trim();
+}
+
 function bossVerseConstituents(verse,col){
   const ref=verse.ref;
   const m=ref.match(/(\d+):(\d+)-(\d+)$/);
   if(!m)return [];
+  const book=verseBook(ref);
   const ch=parseInt(m[1]),vStart=parseInt(m[2]),vEnd=parseInt(m[3]);
   const result=[];
   col.verses.forEach(v=>{
     if(v===verse)return;
+    if(verseBook(v.ref)!==book)return;
     const vm=v.ref.match(/(\d+):(\d+)(?:-(\d+))?$/);
     if(!vm)return;
     const vch=parseInt(vm[1]);
