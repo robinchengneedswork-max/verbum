@@ -16,6 +16,7 @@ let G={
   bossGroupsBeaten:{},
   lessonProgress:{}, lessonVerseIdx:0, lessonModeIdx:0,
   srCards:[], srSessionCount:0,
+  srNewIntro:{day:'',count:0},
 };
 
 // ── Active collection ─────────────────────────────────
@@ -39,6 +40,7 @@ function setActiveCollection(id, skipSave) {
   G.lessonVerseIdx  = cp.lessonVerseIdx  || 0;
   G.srCards         = Array.isArray(cp.srCards) ? cp.srCards : blankCollectionProgress(col.verses).srCards;
   G.srSessionCount  = cp.srSessionCount  || 0;
+  G.srNewIntro      = cp.srNewIntro      || {day:'',count:0};
   G.flowOrder       = [];
   G.flowOrderIdx    = 0;
   // Fill missing SR cards for any newly added verses
@@ -59,6 +61,7 @@ function snapshotCollectionProgress() {
     lessonVerseIdx:  G.lessonVerseIdx,
     srCards:         G.srCards,
     srSessionCount:  G.srSessionCount,
+    srNewIntro:      G.srNewIntro,
   };
 }
 
@@ -77,6 +80,8 @@ const CFG={
   countdown:true,
   devMode:false,
   keyChangeStreak:7,
+  srMode:'ref2text',
+  srNewPerDay:6,
 };
 
 function normalizeConfig(){
@@ -94,6 +99,8 @@ function normalizeConfig(){
   CFG.countdown=typeof CFG.countdown==='boolean'?CFG.countdown:true;
   CFG.keyChangeStreak=Number.isFinite(+CFG.keyChangeStreak)?Math.max(1,Math.round(+CFG.keyChangeStreak)):7;
   CFG.devMode=typeof CFG.devMode==='boolean'?CFG.devMode:false;
+  CFG.srMode=['ref2text','text2ref','firstletter'].includes(CFG.srMode)?CFG.srMode:'ref2text';
+  CFG.srNewPerDay=Number.isFinite(+CFG.srNewPerDay)?Math.min(50,Math.max(0,Math.round(+CFG.srNewPerDay))):6;
 }
 
 // Utility

@@ -14,8 +14,79 @@ function srInt(card,r){
 function getSRQ(all){
   const now=Date.now();
   const bossRefs=new Set(VERSES.filter(v=>isBossVerse(v)).map(v=>v.ref));
-  let d=(all?[...G.srCards]:G.srCards.filter(c=>c.due<=now)).filter(c=>!bossRefs.has(c.ref));
-  return shuffle(d).sort((a,b)=>a.reps-b.reps||a.due-b.due);
+  if(all){
+    let d=G.srCards.filter(c=>!bossRefs.has(c.ref));
+    return shuffle(d).sort((a,b)=>a.reps-b.reps||a.due-b.due);
+  }
+  // Due queue: review cards keep due-based ordering; new cards appended in
+  // collection/verse order, capped at today's remaining new-card allowance.
+  const nonBoss=G.srCards.filter(c=>!bossRefs.has(c.ref));
+  const reviews=shuffle(nonBoss.filter(c=>c.reps>0&&c.due<=now)).sort((a,b)=>a.reps-b.reps||a.due-b.due);
+  const order=new Map(VERSES.map((v,i)=>[v.ref,i]));
+  let news=nonBoss.filter(c=>c.reps===0).sort((a,b)=>(order.get(a.ref)??0)-(order.get(b.ref)??0));
+  const limit=srNewLimitRemaining();
+  if(limit!==Infinity)news=news.slice(0,Math.max(0,limit));
+  return [...reviews,...news];
+}
+
+// Today's remaining new-card allowance for the active collection (Infinity = no cap).
+function srNewLimitRemaining(){
+  const per=CFG.srNewPerDay;
+  if(!(per>0))return Infinity;
+  const intro=srNewIntroToday();
+  return Math.max(0,per-intro.count);
+}
+
+// Read (and roll over) the per-collection new-card intro counter for today.
+function srNewIntroToday(){
+  const today=srTodayStr();
+  if(!G.srNewIntro||G.srNewIntro.day!==today)G.srNewIntro={day:today,count:0};
+  return G.srNewIntro;
+}
+
+function srTodayStr(){
+  const d=new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+// ── First-letter rendering (pure) ──────────────────
+// Per whitespace word: keep leading quote chars + first letter + trailing punctuation.
+function firstLetters(text){
+  return String(text).split(/\s+/).filter(Boolean).map(word=>{
+    const m=word.match(/^(['"‘’“”]*)([A-Za-z])[A-Za-z'’-]*([.,;:!?"'‘’“”]*)$/);
+    if(!m)return word.replace(/[A-Za-z].*$/,c=>c[0]);
+    return m[1]+m[2]+m[3];
+  }).join(' ');
+}
+
+// ── Apply an SR rating to a card (pure mutation of ef/reps/interval/due) ──
+// rating 0=Again resets reps/interval and pushes due +60s; 1/2/3 advance normally.
+function applySRRating(card,rating,now){
+  const ni=srInt(card,rating);
+  const q=[0,2,3,4][rating];
+  card.ef=Math.max(1.3,card.ef+(0.1-(4-q)*(0.08+(4-q)*0.02)));
+  if(rating===0){card.reps=0;card.interval=0;card.due=now+60000;}
+  else{card.reps++;card.interval=ni;card.due=now+ni*86400000;}
+  return card;
+}
+
+// ── Cram deck (pure): refs for a scope, shuffled, boss verses excluded ──
+// scope: {type:'all'} | {type:'section', groupIdx:n} | {type:'mastery', level} | {type:'refs', refs:[]}
+function buildCramDeck(col,scope){
+  const bossRefs=new Set(col.verses.filter(v=>isBossVerse(v)).map(v=>v.ref));
+  let refs=col.verses.filter(v=>!bossRefs.has(v.ref)).map(v=>v.ref);
+  if(scope&&scope.type==='refs'){
+    const want=new Set(scope.refs);
+    refs=refs.filter(r=>want.has(r));
+  }else if(scope&&scope.type==='section'){
+    const groups=getCollectionBossGroups(col);
+    const group=groups&&groups[scope.groupIdx];
+    const want=new Set((group?group.refs:[]).filter(r=>!bossRefs.has(r)));
+    refs=refs.filter(r=>want.has(r));
+  }else if(scope&&scope.type==='mastery'){
+    refs=refs.filter(r=>verseMastery(r)===scope.level);
+  }
+  return shuffle(refs);
 }
 
 // ── Mastery system ──────────────────────────────────
@@ -101,9 +172,11 @@ function getCollectionBossGroups(col){
   const groups = col.bossGroups.map((idxArr, gi) => {
     const refs = idxArr.map(i => col.verses[i]?.ref).filter(Boolean);
     const isFinalBoss = gi === col.bossGroups.length - 1;
+    const nonBossCount = col.verses.filter(v => !isBossVerse(v)).length;
+    const range = col.verses[idxArr[0]]?.ref + ' \u2192 ' + col.verses[idxArr[idxArr.length-1]]?.ref;
     const label = isFinalBoss
-      ? 'Final Boss \u2014 All ' + refs.length + ' Verses'
-      : 'Miniboss ' + (gi+1) + ' \u2014 ' + col.verses[idxArr[0]]?.ref + ' \u2192 ' + col.verses[idxArr[idxArr.length-1]]?.ref;
+      ? (refs.length >= nonBossCount ? 'Final Boss \u2014 All ' + refs.length + ' Verses' : 'Final Boss \u2014 ' + range)
+      : 'Miniboss ' + (gi+1) + ' \u2014 ' + range;
     return { refs, isFinalBoss, label, groupIdx: gi };
   });
   return groups;
@@ -191,12 +264,7 @@ function applyFlowSRRating(ref,errors,perfect){
     card.due=Date.now()+3600000;
   } else {
     const rating=errors===0?3:errors<=2?2:1;
-    const ni=srInt(card,rating);
-    const q=[0,2,3,4][rating];
-    card.ef=Math.max(1.3,card.ef+(0.1-(4-q)*(0.08+(4-q)*0.02)));
-    card.reps++;
-    card.interval=ni;
-    card.due=Date.now()+ni*86400000;
+    applySRRating(card,rating,Date.now());
     G.srSessionCount++;
   }
 

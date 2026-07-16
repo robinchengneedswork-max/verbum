@@ -4,6 +4,7 @@
 
 let fWords=[],fLanes=[],fWordIdx=0;
 let fHearts=5,fStreak=0,fErrors=0,fCorrect=0,fCombo=1;
+let fTapCoinsThisVerse=0; // A1: tap-coin cap counter (max 15 per verse)
 let fRafId=null,fLastTime=0;
 let fTiles=[];
 let fColH=0,fTileH=0;
@@ -126,7 +127,7 @@ function loadVerse(){
   applyMasteryCFG(_mastery);
   const rawWords=verse.text.split(' ');
   fWords=_mastery==='mastered'?applyWordTruncation(rawWords,verse.ref):rawWords;
-  fWordIdx=0;fErrors=0;fCombo=1;sfxKeyShift=0;fLastCorrectLane=-1;fBtStartIdx=-1;fBtEndIdx=-1;fBtEntering=false;fDeadeyeResolving=false;
+  fWordIdx=0;fErrors=0;fCombo=1;sfxKeyShift=0;fLastCorrectLane=-1;fBtStartIdx=-1;fBtEndIdx=-1;fBtEntering=false;fDeadeyeResolving=false;fTapCoinsThisVerse=0;
   updateComboMult(1);if(fBulletTime)exitBulletTime();
   fLanes=buildConstrainedLanes(fWords.length,CFG.ncols);
   document.getElementById('fg-ref').textContent='\u2014 '+verse.ref;
@@ -171,7 +172,7 @@ function shatterTile(ci,tile,kind){
   if(fBulletTime&&tile.globalIdx>=fWordIdx&&tile.globalIdx<=fBtEndIdx)return;
   tile.hit=true;tile.wobbling=false;tile.breaking=kind==='break';tile.stuckSince=null;
   if(tile.el){tile.el.classList.remove('wobble');if(kind==='break'){tile.el.classList.add('breaking');setTimeout(()=>{if(tile.el)tile.el.style.display='none';},220);}else{tile.el.style.display='none';}}
-  fErrors++;fStreak=0;fCombo=1;sfxKeyShift=0;sfxNoteIdx=0;
+  fErrors++;fStreak=0;fCombo=1;sfxKeyShift=0;
   fHearts=Math.max(0,fHearts-1);document.getElementById('fh-val').textContent=fHearts;
   document.getElementById('fg-combo').textContent='\u00d71';hapWrong();sfxWrong();glowCol(ci,'wrong');updateFStreak();fWordIdx++;syncGalagaShip();
   if(fWordIdx>=fWords.length){cancelAnimationFrame(fRafId);fRafId=null;setTimeout(()=>showVerseDone(),kind==='break'?260:200);return;}
@@ -250,7 +251,7 @@ function deadeyeEnd(allCleared){
       } else {
         tile.breaking=true;if(tile.el){tile.el.classList.remove('bt-queued','bt-done');tile.el.classList.add('breaking');setTimeout(()=>{if(tile.el)tile.el.style.display='none';},220);}
         glowCol(ci,'wrong');tone(180+Math.random()*60,'sawtooth',0.05,0.07);
-        fErrors++;fStreak=0;fCombo=1;sfxKeyShift=0;sfxNoteIdx=0;fHearts=Math.max(0,fHearts-1);document.getElementById('fh-val').textContent=fHearts;document.getElementById('fg-combo').textContent='\u00d71';updateComboMult(1);
+        fErrors++;fStreak=0;fCombo=1;sfxKeyShift=0;fHearts=Math.max(0,fHearts-1);document.getElementById('fh-val').textContent=fHearts;document.getElementById('fg-combo').textContent='\u00d71';updateComboMult(1);
       }
     },delay);delay+=80;
   });
@@ -265,7 +266,7 @@ function tileBulletTap(tile){
   if(tile.el){tile.el.classList.remove('bt-queued','breaking','wobble');tile.el.classList.add('bt-done');tile.el.style.display='';}
   fireGalagaShot(ci,tile.el);sfxCorrect();hapCorrect();
   fStreak++;fCorrect++;fCombo=Math.min(fStreak,8);
-  const btTapCoins=1+sfxKeyShift;addCoins(btTapCoins,fCombo>=4?'\ud83d\udd25 \u00d7'+fCombo+' COMBO! +'+btTapCoins+'/tap':null);
+  const btTapCoins=(fTapCoinsThisVerse<15)?1:0;if(btTapCoins>0)fTapCoinsThisVerse++;addCoins(btTapCoins,btTapCoins>0&&fCombo>=4?'\ud83d\udd25 \u00d7'+fCombo+' COMBO! +1/tap':null);
   document.getElementById('fg-combo').textContent='\u00d7'+fCombo;glowCol(ci,'correct');
   const bw=document.getElementById('fg-built');const sp=document.createElement('span');sp.className='bw lit';sp.textContent=(fWordIdx>0?' ':'')+tile.word;bw.appendChild(sp);bw.scrollTop=bw.scrollHeight;setTimeout(()=>sp.classList.remove('lit'),160);
   fLastCorrectLane=ci;fWordIdx++;
@@ -287,13 +288,13 @@ function colTap(ci){
     spawnWordArc(hotTile.word,{getBoundingClientRect:()=>tileRect},fCombo);updateComboMult(fCombo);
     const newShift=Math.floor(fStreak/CFG.keyChangeStreak);
     if(newShift>sfxKeyShift){const kf=document.getElementById('keychange-flash');if(kf){kf.textContent='\ud83c\udfb5 Key +'+newShift;kf.classList.add('show');clearTimeout(kf._t);kf._t=setTimeout(()=>kf.classList.remove('show'),900);}}
-    const tapCoins=1+sfxKeyShift;const comboLabel=fCombo>=4?`\ud83d\udd25 \u00d7${fCombo} COMBO! +${tapCoins}/tap`:null;
+    const tapCoins=(fTapCoinsThisVerse<15)?1:0;if(tapCoins>0)fTapCoinsThisVerse++;const comboLabel=tapCoins>0&&fCombo>=4?`\ud83d\udd25 \u00d7${fCombo} COMBO! +1/tap`:null;
     addCoins(tapCoins,comboLabel);document.getElementById('fg-combo').textContent='\u00d7'+fCombo;glowCol(ci,'correct');
     const bw=document.getElementById('fg-built');const sp2=document.createElement('span');sp2.className='bw lit';sp2.textContent=(fWordIdx>0?' ':'')+hotTile.word;bw.appendChild(sp2);bw.scrollTop=bw.scrollHeight;setTimeout(()=>sp2.classList.remove('lit'),160);
     document.getElementById('fg-pts').textContent=fCorrect+' word'+(fCorrect!==1?'s':'');updateFStreak();fLastCorrectLane=ci;fWordIdx++;syncGalagaShip();
     if(fWordIdx>=fWords.length){cancelAnimationFrame(fRafId);fRafId=null;setTimeout(()=>showVerseDone(),160);return;}
   } else {
-    sfxWrong();hapWrong();fErrors++;fStreak=0;fCombo=1;sfxKeyShift=0;sfxNoteIdx=0;
+    sfxWrong();hapWrong();fErrors++;fStreak=0;fCombo=1;sfxKeyShift=0;
     document.getElementById('fg-combo').textContent='\u00d71';updateComboMult(1);
     fHearts=Math.max(0,fHearts-1);document.getElementById('fh-val').textContent=fHearts;glowCol(ci,'wrong');
     for(let c=0;c<CFG.ncols;c++){const lt=fTiles[c].filter(t=>!t.hit);if(lt.length&&lt[0].word===target)glowCol(c,'correct');}

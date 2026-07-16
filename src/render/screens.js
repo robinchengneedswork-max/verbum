@@ -152,24 +152,89 @@ function roHome(){document.getElementById('result-overlay').classList.remove('sh
 
 // ── SR ──
 let srQ=[],srIdx=0,srFlipped=false;
+let srSubView='review'; // 'review' | 'cram' | 'browse' — session-only UI state
+let srIsDueQueue=true; // A2: true=due queue (rewards), false=study-anyway (no rewards)
+const SR_MODES=[{v:'ref2text',l:'REF → TEXT'},{v:'text2ref',l:'TEXT → REF'},{v:'firstletter',l:'FIRST LETTERS'}];
+const SR_MODE_LABEL={ref2text:'REFERENCE',text2ref:'VERSE TEXT',firstletter:'FIRST LETTERS'};
+
 function renderSR(){
+  renderSRSubTabs();
+  if(srSubView==='cram'){showSRSection('cram');renderCram();return;}
+  if(srSubView==='browse'){showSRSection('browse');renderBrowse();return;}
+  showSRSection('review');
   const now=Date.now();
   document.getElementById('sr-due-count').textContent=G.srCards.filter(c=>c.due<=now).length;
   document.getElementById('sr-new-count').textContent=G.srCards.filter(c=>c.reps===0).length;
   document.getElementById('sr-reviewed').textContent=G.srSessionCount;
   document.getElementById('sr-mastered-count').textContent=G.srCards.filter(c=>c.interval>=21).length;
-  srQ=getSRQ(false);srIdx=0;
+  renderSRModePicker();renderSRNewLine();
+  srQ=getSRQ(false);srIdx=0;srIsDueQueue=true;
+  const practiceHint=document.getElementById('sr-practice-hint');if(practiceHint)practiceHint.style.display='none';
   if(!srQ.length){document.getElementById('sr-card-area').style.display='none';document.getElementById('sr-done').style.display='block';}
   else{document.getElementById('sr-card-area').style.display='block';document.getElementById('sr-done').style.display='none';loadSR();}
 }
-function srRestart(){srQ=getSRQ(true);srIdx=0;document.getElementById('sr-card-area').style.display='block';document.getElementById('sr-done').style.display='none';loadSR();}
+
+// Sub-view switcher (Review | Cram | Browse)
+function renderSRSubTabs(){
+  const el=document.getElementById('sr-subtabs');if(!el)return;
+  const views=[['review','Review'],['cram','Cram'],['browse','Browse']];
+  el.innerHTML=views.map(([v,l])=>`<div class="sr-subtab${srSubView===v?' on':''}" onclick="setSRSubView('${v}')">${l}</div>`).join('');
+}
+function setSRSubView(v){if(srSubView===v)return;srSubView=v;cramSession=null;renderSR();}
+function showSRSection(which){
+  document.getElementById('sr-review-wrap').style.display=which==='review'?'block':'none';
+  document.getElementById('sr-cram-wrap').style.display=which==='cram'?'block':'none';
+  document.getElementById('sr-browse-wrap').style.display=which==='browse'?'block':'none';
+}
+
+// Mode picker (recall mode) — switching reloads presentation without rating.
+function renderSRModePicker(){
+  const el=document.getElementById('sr-mode-picker');if(!el)return;
+  el.innerHTML=SR_MODES.map(m=>`<div class="sr-seg${CFG.srMode===m.v?' on':''}" onclick="setSRMode('${m.v}')">${m.l}</div>`).join('');
+}
+function setSRMode(m){if(CFG.srMode===m)return;CFG.srMode=m;save();renderSRModePicker();if(srSubView==='review'){if(srQ.length&&srIdx<srQ.length)loadSR();}else if(srSubView==='cram'&&cramSession&&cramSession.idx<cramSession.deck.length)loadCramCard();}
+
+// "New today: 2/6" line under the pills when new cards were introduced/capped.
+function renderSRNewLine(){
+  const el=document.getElementById('sr-new-line');if(!el)return;
+  const per=CFG.srNewPerDay;
+  const bossRefs=new Set(VERSES.filter(v=>isBossVerse(v)).map(v=>v.ref));
+  const totalNew=G.srCards.filter(c=>c.reps===0&&!bossRefs.has(c.ref)).length;
+  if(!(per>0)){el.style.display='none';return;}
+  const intro=srNewIntroToday();
+  const remaining=Math.max(0,per-intro.count);
+  if(totalNew>remaining||intro.count>0){
+    el.style.display='block';
+    el.textContent=`New today: ${intro.count}/${per} — more tomorrow (or use Cram)`;
+  }else el.style.display='none';
+}
+
+function srRestart(){srQ=getSRQ(true);srIdx=0;srIsDueQueue=false;const practiceHint=document.getElementById('sr-practice-hint');if(practiceHint){practiceHint.style.display='block';practiceHint.textContent='Practice mode — no rewards';}document.getElementById('sr-card-area').style.display='block';document.getElementById('sr-done').style.display='none';loadSR();}
+
+// Populate the flip card front/back per the active recall mode (shared with Cram).
+function fillFlipCard(elFront,elBack,elLabel,ref,text){
+  const mode=CFG.srMode;
+  if(mode==='text2ref'){
+    elLabel.textContent=SR_MODE_LABEL.text2ref;
+    elFront.innerHTML=`<div class="fc-text">${text}</div>`;
+    elBack.innerHTML=`<div class="fc-ref">${ref}</div><div class="fc-text" style="margin-top:8px;font-size:10px;opacity:0.75">${text}</div>`;
+  }else if(mode==='firstletter'){
+    elLabel.textContent=SR_MODE_LABEL.firstletter;
+    elFront.innerHTML=`<div class="fc-ref">${ref}</div><div class="fc-text" style="margin-top:8px;font-style:normal;letter-spacing:1px">${firstLetters(text)}</div>`;
+    elBack.innerHTML=`<div class="fc-text">${text}</div>`;
+  }else{
+    elLabel.textContent=SR_MODE_LABEL.ref2text;
+    elFront.innerHTML=`<div class="fc-ref">${ref}</div>`;
+    elBack.innerHTML=`<div class="fc-text">${text}</div>`;
+  }
+}
+
 function loadSR(){
   if(srIdx>=srQ.length){srQ=getSRQ(false);srIdx=0;if(!srQ.length){renderSR();return;}}
   const card=srQ[srIdx],verse=VERSES.find(v=>v.ref===card.ref);
   srFlipped=false;
   document.getElementById('fc').classList.remove('flipped');
-  document.getElementById('fc-ref').textContent=card.ref;
-  document.getElementById('fc-text').textContent=verse?verse.text:'\u2014';
+  fillFlipCard(document.getElementById('fc-front-body'),document.getElementById('fc-back-body'),document.getElementById('fc-front-label'),card.ref,verse?verse.text:'\u2014');
   document.getElementById('sr-flip-hint').style.display='block';
   document.getElementById('sr-btns').style.display='none';
   document.getElementById('sr-queue-label').textContent=`${srIdx+1} of ${srQ.length}`;
@@ -181,14 +246,16 @@ function loadSR(){
 function flipCard(){if(srFlipped)return;srFlipped=true;sfxFlip();hapTap();document.getElementById('fc').classList.add('flipped');document.getElementById('sr-flip-hint').style.display='none';document.getElementById('sr-btns').style.display='grid';}
 function rateCard(r){
   if(!srFlipped)return;
-  const card=srQ[srIdx];const ni=srInt(card,r);
-  const q=[0,2,3,4][r];card.ef=Math.max(1.3,card.ef+(0.1-(4-q)*(0.08+(4-q)*0.02)));
+  const card=srQ[srIdx];const wasNew=card.reps===0;
   sfxRate(r);hapTap();
-  if(r===0){card.reps=0;card.interval=0;card.due=Date.now()+60000;srQ.push({...card});}
-  else{card.reps++;card.interval=ni;card.due=Date.now()+ni*86400000;G.srSessionCount++;addXP(r===3?15:r===2?10:5);addCoins(3);}
+  applySRRating(card,r,Date.now());
+  if(r===0){srQ.push({...card});}
+  else if(srIsDueQueue){G.srSessionCount++;addXP(r===3?15:r===2?10:5);addCoins(3);if(wasNew){const intro=srNewIntroToday();intro.count++;}}
+  else{/* study-anyway: apply SR but no coins/XP */}
   srIdx++;save();
   document.getElementById('sr-reviewed').textContent=G.srSessionCount;
   document.getElementById('sr-mastered-count').textContent=G.srCards.filter(c=>c.interval>=21).length;
+  renderSRNewLine();
   const fw=document.getElementById('fc-wrap');
   fw.style.cssText='transition:transform 0.15s,opacity 0.15s;transform:translateX(-38px);opacity:0';
   setTimeout(()=>{fw.style.cssText='transition:none;transform:translateX(38px);opacity:0';loadSR();setTimeout(()=>{fw.style.cssText='transition:transform 0.15s,opacity 0.15s;transform:none;opacity:1';},14);},160);

@@ -19,6 +19,7 @@ function blankCollectionProgress(verses) {
       due:      Date.now(),
     })),
     srSessionCount: 0,
+    srNewIntro: { day: '', count: 0 },
   };
 }
 

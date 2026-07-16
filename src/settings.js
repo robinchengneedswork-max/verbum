@@ -29,6 +29,7 @@ function syncSettingsUI(){
   const sst=document.getElementById('s-screentiles');sst.value=CFG.screenTileUnits;document.getElementById('s-screentiles-val').textContent=CFG.screenTileUnits.toFixed(1)+' tiles';
   const swb=document.getElementById('s-wobble');swb.value=CFG.bottomWobbleMs;document.getElementById('s-wobble-val').textContent=CFG.bottomWobbleMs+'ms';
   const skc=document.getElementById('s-keychange');skc.value=CFG.keyChangeStreak;document.getElementById('s-keychange-val').textContent=CFG.keyChangeStreak+' taps';
+  const ssn=document.getElementById('s-srnew');if(ssn){ssn.value=CFG.srNewPerDay;document.getElementById('s-srnew-val').textContent=CFG.srNewPerDay;}
   document.getElementById('hap-on').classList.toggle('on',CFG.haptics);document.getElementById('hap-off').classList.toggle('on',!CFG.haptics);
   document.getElementById('cd-on').classList.toggle('on',CFG.countdown);document.getElementById('cd-off').classList.toggle('on',!CFG.countdown);
   document.getElementById('bw-on').classList.toggle('on',CFG.bottomWobble);document.getElementById('bw-off').classList.toggle('on',!CFG.bottomWobble);

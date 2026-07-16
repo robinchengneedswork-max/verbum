@@ -7,8 +7,9 @@
 // Pct within level = xp % 100
 
 // Rewards per level-up:
-//   - Every level: +50 coins
+//   - Every level: +25 coins  (A3: halved from 50, centralised here)
 //   - Every 5 levels: +1 Shard of Light
+const LEVEL_UP_COINS=25;
 
 // Mastery level-up rewards (verse progression, not player level)
 const MASTERY_LEVEL_UP_REWARDS = {

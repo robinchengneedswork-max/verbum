@@ -29,7 +29,7 @@ function addXP(n){
 function onLevelUp(newLevel){
   const shardReward=newLevel%5===0;
   if(shardReward){G.shards++;updateShardDisplay();}
-  const coinBonus=50;G.coins+=coinBonus;updateHeader();
+  const coinBonus=LEVEL_UP_COINS;G.coins+=coinBonus;updateHeader();
   showLevelUpOverlay(newLevel,coinBonus,shardReward);
   showBurst();hapComplete();sfxComplete();
   save();
@@ -149,7 +149,7 @@ function animateXPSegment(xpStart, xpToAdd, fill, lvAfterEl, onComplete){
 
 function showFlowLevelUp(level, onDone){
   const shardReward=level%5===0;
-  const coinBonus=50;
+  const coinBonus=LEVEL_UP_COINS;
   const screen=document.getElementById('levelup-screen');
   if(!screen){onDone();return;}
   document.getElementById('lv-num').textContent=level;

@@ -12,6 +12,8 @@ function save(){
       inventory:G.inventory,equipped:G.equipped,
       activeCollectionId:G.activeCollectionId,
       collectionProgress:G.collectionProgress,
+      verseCompletions:G.verseCompletions,
+      bossGroupsBeaten:G.bossGroupsBeaten,
       CFG:{...CFG},
     }));
   }catch(e){}
