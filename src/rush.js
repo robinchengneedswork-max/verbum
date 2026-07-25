@@ -25,6 +25,7 @@ const RUSH={
   WRONG_PENALTY:0.25,   // bar lost on a wrong pick
   DROP_REFILL:0.45,     // bar level after a tier-up carry-over / tier drop
   BASE_PTS:10,          // base points per correct word (× tier × tempo bonus)
+  MISS_TIME_PENALTY:5,  // seconds added to your run time per wrong pick (brutal)
 };
 // Required pace to hold a tier: ×1→48, ×2→56, ×3→64, ×4→72, ×5→80 wpm.
 function rushReqWpm(tier){return 40+8*tier;}
@@ -94,7 +95,7 @@ function startRush(){
   if(!verse)return;
   const words=verse.text.split(' ');
   R={verse,words,idx:0,built:[],slots:[],slotEls:[],fill:RUSH.START_FILL,tier:1,score:0,
-     peakTier:1,correct:0,errors:0,lastPickTime:0,lastGap:0,lastFrame:0,rafId:null,startTime:0};
+     peakTier:1,correct:0,errors:0,lastPickTime:0,lastGap:0,lastFrame:0,rafId:null,startTime:0,penalty:0};
   rushSeedSlots();
   document.getElementById('flow-menu').style.display='none';
   document.getElementById('flow-game').style.display='none';
@@ -125,7 +126,7 @@ function rushLoop(now){
     else{R.fill=0;}
   }
   rushRenderBar();
-  document.getElementById('rush-time').textContent=rushFmtTime((now-R.startTime)/1000,false);
+  document.getElementById('rush-time').textContent=rushFmtTime((now-R.startTime)/1000+R.penalty,false);
   R.rafId=requestAnimationFrame(rushLoop);
 }
 
@@ -172,9 +173,12 @@ function rushPick(i){
   }else{
     R.errors++;sfxWrong();hapWrong();R.lastGap=0;
     R.fill=Math.max(0,R.fill-RUSH.WRONG_PENALTY);
+    R.penalty+=RUSH.MISS_TIME_PENALTY; // +5s to the clock — brutal
     const box=document.getElementById('rush-options');box.classList.add('rush-shake');
     setTimeout(()=>box.classList.remove('rush-shake'),400);
     if(el){el.classList.add('rush-wrong');setTimeout(()=>{if(el)el.classList.remove('rush-wrong');},300);}
+    const t=document.getElementById('rush-time');
+    if(t){t.classList.remove('rush-time-hit');void t.offsetWidth;t.classList.add('rush-time-hit');}
     rushRenderBar();
   }
 }
@@ -206,18 +210,27 @@ function rushRenderBar(){
 function rushDone(){
   if(R.rafId){cancelAnimationFrame(R.rafId);R.rafId=null;}
   showBurst();sfxComplete();hapComplete();
-  const elapsed=(performance.now()-R.startTime)/1000;
+  const elapsed=(performance.now()-R.startTime)/1000+R.penalty; // includes miss penalties
   const wpm=elapsed>0?Math.round(R.words.length/(elapsed/60)):0;
   const xp=Math.max(6,Math.min(40,Math.round(R.score/150)));
   const coins=Math.max(4,Math.min(30,Math.round(R.score/200)))+(R.errors===0?3:0);
   addXP(xp);addCoins(coins);
   const {score,peakTier:peak,errors,verse}=R;
+  // Personal best (lowest total time incl. penalties) per passage, persisted in G.
+  if(!G.rushBest)G.rushBest={};
+  const prevBest=G.rushBest[verse.ref];
+  const isPB=(prevBest==null||elapsed<prevBest);
+  if(isPB)G.rushBest[verse.ref]=elapsed;
+  const pbLine=isPB
+    ?`<div class="rush-done-pb best">🏆 New best!${prevBest!=null?` (was ${rushFmtTime(prevBest,true)})`:''}</div>`
+    :`<div class="rush-done-pb">PB ${rushFmtTime(prevBest,true)}</div>`;
   document.getElementById('rush-time').textContent=rushFmtTime(elapsed,false);
   document.getElementById('rush-options').style.display='none';
   const done=document.getElementById('rush-done');done.style.display='block';
   done.innerHTML=`<div class="rush-done-icon">${errors===0?'⚡':'🏁'}</div>
     <div class="rush-done-title">${errors===0?'Flawless Rush!':'Rush Complete!'}</div>
     <div class="rush-done-time">⏱ ${rushFmtTime(elapsed,true)} · ${wpm} wpm</div>
+    ${pbLine}
     <div class="rush-done-sub">Score ${score} · peak ×${peak} · ${errors} miss${errors!==1?'es':''}</div>
     <div class="rush-done-gain">+${xp} XP · +${coins} 💰</div>
     <div class="rush-done-verse">${verse.text}</div>
