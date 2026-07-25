@@ -94,7 +94,7 @@ function startRush(){
   if(!verse)return;
   const words=verse.text.split(' ');
   R={verse,words,idx:0,built:[],slots:[],slotEls:[],fill:RUSH.START_FILL,tier:1,score:0,
-     peakTier:1,correct:0,errors:0,lastPickTime:0,lastGap:0,lastFrame:0,rafId:null};
+     peakTier:1,correct:0,errors:0,lastPickTime:0,lastGap:0,lastFrame:0,rafId:null,startTime:0};
   rushSeedSlots();
   document.getElementById('flow-menu').style.display='none';
   document.getElementById('flow-game').style.display='none';
@@ -102,9 +102,16 @@ function startRush(){
   document.getElementById('rush-done').style.display='none';
   document.getElementById('rush-options').style.display='';
   document.getElementById('rush-ref').textContent='— '+verse.ref;
+  document.getElementById('rush-time').textContent='0:00';
   rushRenderBuilt();rushBuildChips();rushRenderBar();
-  R.lastFrame=performance.now();R.lastPickTime=performance.now();
+  const t0=performance.now();R.lastFrame=t0;R.lastPickTime=t0;R.startTime=t0;
   R.rafId=requestAnimationFrame(rushLoop);
+}
+
+// Format seconds as m:ss (live) or m:ss.d (final, with tenths for speedruns).
+function rushFmtTime(sec,tenths){
+  const m=Math.floor(sec/60);const s=sec-m*60;
+  return tenths?(m+':'+(s<10?'0':'')+s.toFixed(1)):(m+':'+String(Math.floor(s)).padStart(2,'0'));
 }
 
 // The core loop: drain the bar; empty → drop a tier (or clamp at ×1). Runs every
@@ -118,6 +125,7 @@ function rushLoop(now){
     else{R.fill=0;}
   }
   rushRenderBar();
+  document.getElementById('rush-time').textContent=rushFmtTime((now-R.startTime)/1000,false);
   R.rafId=requestAnimationFrame(rushLoop);
 }
 
@@ -198,14 +206,18 @@ function rushRenderBar(){
 function rushDone(){
   if(R.rafId){cancelAnimationFrame(R.rafId);R.rafId=null;}
   showBurst();sfxComplete();hapComplete();
+  const elapsed=(performance.now()-R.startTime)/1000;
+  const wpm=elapsed>0?Math.round(R.words.length/(elapsed/60)):0;
   const xp=Math.max(6,Math.min(40,Math.round(R.score/150)));
   const coins=Math.max(4,Math.min(30,Math.round(R.score/200)))+(R.errors===0?3:0);
   addXP(xp);addCoins(coins);
   const {score,peakTier:peak,errors,verse}=R;
+  document.getElementById('rush-time').textContent=rushFmtTime(elapsed,false);
   document.getElementById('rush-options').style.display='none';
   const done=document.getElementById('rush-done');done.style.display='block';
   done.innerHTML=`<div class="rush-done-icon">${errors===0?'⚡':'🏁'}</div>
     <div class="rush-done-title">${errors===0?'Flawless Rush!':'Rush Complete!'}</div>
+    <div class="rush-done-time">⏱ ${rushFmtTime(elapsed,true)} · ${wpm} wpm</div>
     <div class="rush-done-sub">Score ${score} · peak ×${peak} · ${errors} miss${errors!==1?'es':''}</div>
     <div class="rush-done-gain">+${xp} XP · +${coins} 💰</div>
     <div class="rush-done-verse">${verse.text}</div>
