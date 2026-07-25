@@ -63,14 +63,22 @@ function rushSeedSlots(){
   R.slots=shuffle(base);
 }
 
-// After advancing idx, refill only the just-tapped slot with the new look-ahead
-// (words[idx+1]); if that word is already on the board, drop in a distractor.
+// After a correct tap at slot s (idx already advanced): change ONLY slot s so the
+// board stays stable. Guarantee the new current word (words[idx]) is on the board —
+// normally it already is (it was pre-seeded as the previous look-ahead), so we seed
+// the NEXT look-ahead here. Only in the rare duplicate case where the current word
+// has drifted off the board do we drop it straight into slot s (prevents a stuck
+// state where none of the four chips is the answer).
 function rushReseedSlot(s){
+  const cur=R.idx<R.words.length?R.words[R.idx]:null;
+  const curNorm=cur!==null?rushNorm(cur):null;
+  const othersHaveCur=curNorm!==null&&R.slots.some((w,k)=>k!==s&&rushNorm(w)===curNorm);
+  if(cur!==null&&!othersHaveCur){R.slots[s]=cur;return;}
   const look=R.idx+1<R.words.length?R.words[R.idx+1]:null;
-  const others=R.slots.filter((_,i)=>i!==s);
+  const others=R.slots.filter((_,k)=>k!==s);
   const present=new Set(others.map(rushNorm));
-  const neu=(look!==null&&!present.has(rushNorm(look)))?look:rushDistractor(R.slots);
-  R.slots[s]=neu;
+  if(look!==null&&!present.has(rushNorm(look))&&rushNorm(look)!==curNorm){R.slots[s]=look;}
+  else{R.slots[s]=rushDistractor(cur!==null?R.slots.concat([cur]):R.slots);}
 }
 
 // ── Session lifecycle ──
@@ -115,7 +123,12 @@ function rushBuildChips(){
   for(let i=0;i<RUSH_COLS;i++){
     const b=document.createElement('button');b.className='rush-chip';
     b.innerHTML=`<span class="rush-chip-num">${i+1}</span><span class="rush-chip-word">${R.slots[i]}</span>`;
-    b.onclick=()=>rushPick(i);R.slotEls[i]=b;box.appendChild(b);
+    // touchstart/mousedown (not click) to kill the ~300ms mobile tap delay and
+    // register rapid back-to-back taps; preventDefault stops the emulated mousedown.
+    const idx=i;
+    b.addEventListener('touchstart',(e)=>{e.preventDefault();rushPick(idx);},{passive:false});
+    b.addEventListener('mousedown',()=>rushPick(idx));
+    R.slotEls[i]=b;box.appendChild(b);
   }
 }
 function rushUpdateSlot(i){

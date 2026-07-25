@@ -619,7 +619,7 @@ body.nyan-skin #fg-piano::after{content:'';position:absolute;left:0;right:0;bott
 #rush-built{min-height:52px;font-size:16px;line-height:1.55;color:#C9A84C;text-align:center;padding:6px 8px;font-family:Georgia,serif}
 #rush-options{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:12px;flex:1;padding:10px 0 6px}
 #rush-options.rush-shake{animation:vvShake 0.4s}
-.rush-chip{position:relative;display:flex;align-items:center;justify-content:center;padding:12px;font-size:24px;font-weight:700;color:#F0E0C0;background:linear-gradient(135deg,#241700,#180F00);border:2px solid #4A3400;border-radius:14px;cursor:pointer;transition:transform 0.06s,border-color 0.1s;min-height:0}
+.rush-chip{position:relative;display:flex;align-items:center;justify-content:center;padding:12px;font-size:24px;font-weight:700;color:#F0E0C0;background:linear-gradient(135deg,#241700,#180F00);border:2px solid #4A3400;border-radius:14px;cursor:pointer;transition:transform 0.06s,border-color 0.1s;min-height:0;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .rush-chip:active{transform:scale(0.96)}
 .rush-chip-num{position:absolute;top:6px;left:9px;font-size:10px;color:#6A5030;font-weight:600}
 .rush-chip.rush-pop{animation:rushPop 0.24s ease}
