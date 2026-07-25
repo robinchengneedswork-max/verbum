@@ -19,15 +19,15 @@ let R=null; // per-session state, rebuilt each startRush()
 
 // ── Tuning knobs (grouped so playtest tuning is one edit) ──
 const RUSH={
-  FILL_PER_WORD:0.34,   // bar gained per correct word
-  START_FILL:0.6,       // bar level at the start of a run
+  FILL_PER_WORD:0.22,   // bar gained per correct word (lower = longer bar)
+  START_FILL:0.7,       // bar level at the start of a run
   MAX_TIER:5,           // ×1 .. ×5
-  WRONG_PENALTY:0.40,   // bar lost on a wrong pick
-  DROP_REFILL:0.40,     // bar level after a tier-up carry-over / tier drop
+  WRONG_PENALTY:0.25,   // bar lost on a wrong pick
+  DROP_REFILL:0.45,     // bar level after a tier-up carry-over / tier drop
   BASE_PTS:10,          // base points per correct word (× tier × tempo bonus)
 };
-// Required pace to hold a tier: ×1→60, ×2→70, ×3→80, ×4→90, ×5→100 wpm.
-function rushReqWpm(tier){return 50+10*tier;}
+// Required pace to hold a tier: ×1→48, ×2→56, ×3→64, ×4→72, ×5→80 wpm.
+function rushReqWpm(tier){return 40+8*tier;}
 // Per-second drain so that answering at reqWpm exactly holds the bar steady.
 function rushDrainRate(tier){return rushReqWpm(tier)*RUSH.FILL_PER_WORD/60;}
 
