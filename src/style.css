@@ -606,3 +606,31 @@ body.nyan-skin #fg-piano::after{content:'';position:absolute;left:0;right:0;bott
 .eg-done-title{font-size:16px;color:#C9A84C;font-weight:700;margin-bottom:4px}
 .eg-done-sub{font-size:11px;color:#9A7A3F;margin-bottom:10px}
 .eg-done-verse{font-size:12px;color:#E8D5A0;font-style:italic;line-height:1.5;margin-bottom:14px;font-family:Georgia,serif}
+/* ── Time Rush (fast next-word combo mode) ── */
+#rush-game{flex:1;flex-direction:column;padding:10px 12px;overflow-y:auto;--rush-col:#FFD700}
+#rush-bar-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+#rush-back{background:none;border:none;color:#C9A84C;font-size:20px;cursor:pointer;padding:0 4px}
+#rush-combo-track{flex:1;height:14px;background:#1A1200;border:1px solid #3A2A00;border-radius:8px;overflow:hidden}
+#rush-combo-fill{height:100%;width:60%;background:#FFD700;border-radius:8px;transition:width 0.08s linear,background 0.15s}
+#rush-tier{font-size:21px;font-weight:800;color:#FFD700;min-width:40px;text-align:center;display:inline-block}
+#rush-tier.rush-punch{animation:comboPunch 0.18s cubic-bezier(.2,.8,.3,1.2)}
+#rush-score{font-size:13px;color:#9A7A3F;min-width:46px;text-align:right;font-variant-numeric:tabular-nums}
+#rush-ref{text-align:center;font-size:11px;color:#7A5C2A;margin-bottom:6px}
+#rush-built{min-height:42px;font-size:14px;line-height:1.55;color:#C9A84C;text-align:center;padding:4px 8px;font-family:Georgia,serif}
+#rush-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:auto;padding:8px 0}
+#rush-options.rush-shake{animation:vvShake 0.4s}
+.rush-chip{position:relative;padding:20px 12px;font-size:18px;font-weight:700;color:#F0E0C0;background:linear-gradient(135deg,#241700,#180F00);border:2px solid #4A3400;border-radius:12px;cursor:pointer;transition:transform 0.06s,border-color 0.1s}
+.rush-chip:active{transform:scale(0.96)}
+.rush-chip-num{position:absolute;top:5px;left:7px;font-size:9px;color:#6A5030;font-weight:600}
+.rush-chip.rush-pop{animation:rushPop 0.22s ease}
+.rush-chip.rush-wrong{border-color:#FF5252;background:#2A0000;color:#FF8A80}
+@keyframes rushPop{0%{transform:scale(1)}40%{transform:scale(1.14);border-color:var(--rush-col,#FFD700);box-shadow:0 0 16px var(--rush-col,#FFD700)}100%{transform:scale(1);opacity:0.55}}
+#rush-game.rush-hot #rush-combo-track{box-shadow:0 0 16px var(--rush-col,#FF6B35)}
+#rush-game.rush-hot{animation:rushHotPulse 0.9s ease-in-out infinite}
+@keyframes rushHotPulse{0%,100%{background:rgba(0,0,0,0)}50%{background:rgba(255,107,53,0.06)}}
+#rush-done{text-align:center;padding:22px 10px}
+.rush-done-icon{font-size:44px;margin-bottom:8px}
+.rush-done-title{font-size:18px;color:#C9A84C;font-weight:700;margin-bottom:5px}
+.rush-done-sub{font-size:11px;color:#9A7A3F;margin-bottom:4px}
+.rush-done-gain{font-size:14px;color:#FFD700;font-weight:700;margin-bottom:12px}
+.rush-done-verse{font-size:12px;color:#E8D5A0;font-style:italic;line-height:1.5;margin-bottom:14px;font-family:Georgia,serif}

@@ -55,7 +55,7 @@ function renderFlowMenu(){
   document.getElementById('flow-game').style.display='none';
   if(fRafId){cancelAnimationFrame(fRafId);fRafId=null;}
   renderVList('flow-vlist',(i)=>{G.flowOrder=[i];G.flowOrderIdx=0;startFlowGame();});
-  const col=activeCollection();renderBossSection();
+  const col=activeCollection();renderBossSection();if(typeof renderRushCard==='function')renderRushCard();
   const lbl=document.getElementById('flow-collection-label');if(lbl)lbl.textContent=col.icon+' '+col.name+' \u00b7 '+VERSES.length+' verses';
   const allTitle=document.getElementById('flow-all-title');if(allTitle)allTitle.textContent='All '+VERSES.length+' Verses';
   document.getElementById('kb-hint').textContent='';
