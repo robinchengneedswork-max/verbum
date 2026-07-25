@@ -38,19 +38,39 @@ function rushTierColor(tier){return RUSH_PAL[Math.min(tier-1,RUSH_PAL.length-1)]
 // Normalize a token for distractor de-duplication (ignore case/punctuation).
 function rushNorm(w){return w.toLowerCase().replace(/[^a-z0-9]/g,'');}
 
-// ── Options: the correct next word + 3 distractors from the same passage ──
-function rushMakeOptions(idx){
-  const answer=R.words[idx];const ansNorm=rushNorm(answer);
-  const seen={};const cands=[];
-  R.words.forEach((w,i)=>{
-    if(i===idx)return;const n=rushNorm(w);
-    if(!n||n===ansNorm||seen[n])return;seen[n]=1;cands.push(w);
-  });
-  // Prefer distractors of similar length (more confusable), then pick 3 at random.
-  cands.sort((a,b)=>Math.abs(a.length-answer.length)-Math.abs(b.length-answer.length));
-  const near=cands.slice(0,Math.min(12,cands.length));
-  const picks=shuffle(near).slice(0,3);
-  return shuffle([{word:answer,correct:true},...picks.map(w=>({word:w,correct:false}))]);
+// ── Stable board ──
+// Four slots that stay put across picks. The board always holds BOTH the current
+// word (words[idx]) and the next one (words[idx+1]), plus distractors. When you
+// tap the current word, the NEW current word is the one that was already sitting
+// there (unchanged — no re-reading), and only the tapped slot is refilled, with a
+// look-ahead word (never the immediate answer). So only one chip ever changes.
+const RUSH_COLS=4;
+
+// A word from the passage not already normalized-present in `avoid`.
+function rushDistractor(avoid){
+  const used=new Set(avoid.map(rushNorm));
+  const pool=R.words.filter(w=>!used.has(rushNorm(w)));
+  const src=pool.length?pool:R.words;
+  return src[Math.floor(Math.random()*src.length)];
+}
+
+// Seed the initial board: current word + next word (if distinct) + distractors.
+function rushSeedSlots(){
+  const cur=R.words[0],nxt=R.words[1];
+  const base=[cur];
+  if(nxt!==undefined&&rushNorm(nxt)!==rushNorm(cur))base.push(nxt);
+  while(base.length<RUSH_COLS)base.push(rushDistractor(base));
+  R.slots=shuffle(base);
+}
+
+// After advancing idx, refill only the just-tapped slot with the new look-ahead
+// (words[idx+1]); if that word is already on the board, drop in a distractor.
+function rushReseedSlot(s){
+  const look=R.idx+1<R.words.length?R.words[R.idx+1]:null;
+  const others=R.slots.filter((_,i)=>i!==s);
+  const present=new Set(others.map(rushNorm));
+  const neu=(look!==null&&!present.has(rushNorm(look)))?look:rushDistractor(R.slots);
+  R.slots[s]=neu;
 }
 
 // ── Session lifecycle ──
@@ -60,15 +80,16 @@ function startRush(){
   const verse=col.verses.find(v=>isBossVerse(v))||col.verses.find(v=>/\d+:\d+-\d+$/.test(v.ref));
   if(!verse)return;
   const words=verse.text.split(' ');
-  R={verse,words,idx:0,built:[],opts:null,fill:RUSH.START_FILL,tier:1,score:0,
+  R={verse,words,idx:0,built:[],slots:[],slotEls:[],fill:RUSH.START_FILL,tier:1,score:0,
      peakTier:1,correct:0,errors:0,lastPickTime:0,lastGap:0,lastFrame:0,rafId:null};
+  rushSeedSlots();
   document.getElementById('flow-menu').style.display='none';
   document.getElementById('flow-game').style.display='none';
   document.getElementById('rush-game').style.display='flex';
   document.getElementById('rush-done').style.display='none';
-  const opts=document.getElementById('rush-options');opts.style.display='';opts.innerHTML='';
+  document.getElementById('rush-options').style.display='';
   document.getElementById('rush-ref').textContent='— '+verse.ref;
-  rushRenderBuilt();rushRenderOptions();rushRenderBar();
+  rushRenderBuilt();rushBuildChips();rushRenderBar();
   R.lastFrame=performance.now();R.lastPickTime=performance.now();
   R.rafId=requestAnimationFrame(rushLoop);
 }
@@ -87,20 +108,25 @@ function rushLoop(now){
   R.rafId=requestAnimationFrame(rushLoop);
 }
 
-function rushRenderOptions(){
-  if(R.idx>=R.words.length)return;
-  R.opts=rushMakeOptions(R.idx);
-  const box=document.getElementById('rush-options');box.innerHTML='';
-  R.opts.forEach((o,i)=>{
+// Build the 4 chips ONCE; thereafter we only mutate the single tapped slot, so the
+// other three never reflow or change text (the whole point — no re-reading).
+function rushBuildChips(){
+  const box=document.getElementById('rush-options');box.innerHTML='';R.slotEls=[];
+  for(let i=0;i<RUSH_COLS;i++){
     const b=document.createElement('button');b.className='rush-chip';
-    b.innerHTML=`<span class="rush-chip-num">${i+1}</span>${o.word}`;
-    b.onclick=()=>rushPick(o,b);o.el=b;box.appendChild(b);
-  });
+    b.innerHTML=`<span class="rush-chip-num">${i+1}</span><span class="rush-chip-word">${R.slots[i]}</span>`;
+    b.onclick=()=>rushPick(i);R.slotEls[i]=b;box.appendChild(b);
+  }
+}
+function rushUpdateSlot(i){
+  const b=R.slotEls[i];if(!b)return;
+  b.querySelector('.rush-chip-word').textContent=R.slots[i];
 }
 
-function rushPick(o,el){
-  if(!R||R.idx>=R.words.length||!o)return;resumeAC();
-  if(o.correct){
+function rushPick(i){
+  if(!R||R.idx>=R.words.length)return;resumeAC();
+  const el=R.slotEls[i];
+  if(rushNorm(R.slots[i])===rushNorm(R.words[R.idx])){
     const now=performance.now();const gap=now-R.lastPickTime;R.lastPickTime=now;
     // Tempo bonus: reward a quick answer, plus a steady (even) beat vs the last gap.
     let tempo=1;
@@ -111,11 +137,12 @@ function rushPick(o,el){
     R.correct++;R.built.push(R.words[R.idx]);R.idx++;
     R.fill=Math.min(1,R.fill+RUSH.FILL_PER_WORD);
     sfxCorrect();hapCorrect();
-    if(el)el.classList.add('rush-pop');
     if(R.fill>=1&&R.tier<RUSH.MAX_TIER)rushTierUp();
     rushRenderBuilt();rushRenderBar();
     if(R.idx>=R.words.length){rushDone();return;}
-    rushRenderOptions();
+    // Only the tapped slot changes — pop it and swap in the look-ahead word.
+    rushReseedSlot(i);rushUpdateSlot(i);
+    if(el){el.classList.remove('rush-pop');void el.offsetWidth;el.classList.add('rush-pop');}
   }else{
     R.errors++;sfxWrong();hapWrong();R.lastGap=0;
     R.fill=Math.max(0,R.fill-RUSH.WRONG_PENALTY);
@@ -190,5 +217,5 @@ document.addEventListener('keydown',(e)=>{
   if(!R)return;
   if(e.key==='Escape'){exitRush();return;}
   const n=parseInt(e.key);
-  if(R.opts&&n>=1&&n<=R.opts.length){e.preventDefault();const o=R.opts[n-1];rushPick(o,o.el);}
+  if(n>=1&&n<=RUSH_COLS){e.preventDefault();rushPick(n-1);}
 });
