@@ -335,5 +335,24 @@ const COLLECTION_THE100 = {
   ],
 };
 
+// ── Collection: Psalm 1 (ESV) ────────────────────────
+const COLLECTION_PSALM1 = {
+  id:       'psalm1',
+  name:     'Psalm 1',
+  icon:     '🌳',
+  subtitle: 'ESV · The Two Ways · 6 verses + full psalm',
+  theme:    '#7FC97F',
+  unlocked: true,
+  verses: [
+    {ref:'Psalm 1:1', text:'Blessed is the man who walks not in the counsel of the wicked, nor stands in the way of sinners, nor sits in the seat of scoffers;'},
+    {ref:'Psalm 1:2', text:'but his delight is in the law of the Lord, and on his law he meditates day and night.'},
+    {ref:'Psalm 1:3', text:'He is like a tree planted by streams of water that yields its fruit in its season, and its leaf does not wither. In all that he does, he prospers.'},
+    {ref:'Psalm 1:4', text:'The wicked are not so, but are like chaff that the wind drives away.'},
+    {ref:'Psalm 1:5', text:'Therefore the wicked will not stand in the judgment, nor sinners in the congregation of the righteous;'},
+    {ref:'Psalm 1:6', text:'for the Lord knows the way of the righteous, but the way of the wicked will perish.'},
+    {ref:'Psalm 1:1-6', text:'Blessed is the man who walks not in the counsel of the wicked, nor stands in the way of sinners, nor sits in the seat of scoffers; but his delight is in the law of the Lord, and on his law he meditates day and night. He is like a tree planted by streams of water that yields its fruit in its season, and its leaf does not wither. In all that he does, he prospers. The wicked are not so, but are like chaff that the wind drives away. Therefore the wicked will not stand in the judgment, nor sinners in the congregation of the righteous; for the Lord knows the way of the righteous, but the way of the wicked will perish.'},
+  ],
+};
+
 // ── Master collection registry ────────────────────────
-const COLLECTIONS = [COLLECTION_JOHN, COLLECTION_NOBLEMEN, COLLECTION_2COR4, COLLECTION_THE100];
+const COLLECTIONS = [COLLECTION_JOHN, COLLECTION_NOBLEMEN, COLLECTION_2COR4, COLLECTION_PSALM1, COLLECTION_THE100];

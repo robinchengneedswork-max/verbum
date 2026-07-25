@@ -42,6 +42,9 @@ const SKIN_VARS={
   pomegranate:{'--col-bg':'#0E0202','--col-border':'#4A0808','--col-active-bg':'#1A0404','--col-active-border':'#CC2233','--col-correct-bg':'#0C0800','--col-correct-border':'#FFCC40','--tile-hot-bg':'linear-gradient(160deg,#4A0808,#7A1010)','--tile-hot-border':'#FF3344','--tile-hot-shadow':'rgba(255,51,68,0.45)','--tile-hot-color':'#FFE8E8'},
   cedarlebanon:{'--col-bg':'#080402','--col-border':'#3A1808','--col-active-bg':'#120804','--col-active-border':'#A06030','--col-correct-bg':'#060C04','--col-correct-border':'#80A848','--tile-hot-bg':'linear-gradient(160deg,#3A1808,#6A2C10)','--tile-hot-border':'#C07840','--tile-hot-shadow':'rgba(192,120,64,0.45)','--tile-hot-color':'#FFF0D8'},
   thedeep:{'--col-bg':'#020408','--col-border':'#041828','--col-active-bg':'#040A14','--col-active-border':'#00A8C8','--col-correct-bg':'#020408','--col-correct-border':'#40E8C0','--tile-hot-bg':'linear-gradient(160deg,#041828,#063050)','--tile-hot-border':'#00C8E8','--tile-hot-shadow':'rgba(0,200,232,0.5)','--tile-hot-color':'#D0FFFF'},
+  // ── Psalm 1 ──
+  streams:{'--col-bg':'#03120C','--col-border':'#0E4030','--col-active-bg':'#061E14','--col-active-border':'#3FD9A8','--col-correct-bg':'#04140A','--col-correct-border':'#7FF0C0','--tile-hot-bg':'linear-gradient(160deg,#0A3A2A,#0E5A46)','--tile-hot-border':'#4FE0C0','--tile-hot-shadow':'rgba(79,224,192,0.45)','--tile-hot-color':'#E8FFF6'},
+  chaff:{'--col-bg':'#14100A','--col-border':'#4A3E22','--col-active-bg':'#201A0E','--col-active-border':'#D9C27A','--col-correct-bg':'#181408','--col-correct-border':'#EBD9A0','--tile-hot-bg':'linear-gradient(160deg,#4A3C1E,#6E5A2E)','--tile-hot-border':'#E0C878','--tile-hot-shadow':'rgba(224,200,120,0.4)','--tile-hot-color':'#FBF3D8'},
 };
 
 const SKIN_CLASS_MAP={herohighway:'gh-skin',katamari:'katamari-skin',darksouls:'darksouls-skin',galaga:'galaga-skin',nyan:'nyan-skin'};
