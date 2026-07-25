@@ -45,11 +45,16 @@ function rushNorm(w){return w.toLowerCase().replace(/[^a-z0-9]/g,'');}
 // there (unchanged — no re-reading), and only the tapped slot is refilled, with a
 // look-ahead word (never the immediate answer). So only one chip ever changes.
 const RUSH_COLS=4;
+const RUSH_WINDOW=8; // distractors are drawn from the next N upcoming words
 
-// A word from the passage not already normalized-present in `avoid`.
+// A word from the next RUSH_WINDOW words (a sliding window from the current idx),
+// skipping anything already normalized-present in `avoid`. Falls back to the whole
+// passage only if the window can't supply one (e.g. the last few words).
 function rushDistractor(avoid){
   const used=new Set(avoid.map(rushNorm));
-  const pool=R.words.filter(w=>!used.has(rushNorm(w)));
+  const from=R.idx||0;
+  let pool=R.words.slice(from,from+RUSH_WINDOW).filter(w=>!used.has(rushNorm(w)));
+  if(!pool.length)pool=R.words.filter(w=>!used.has(rushNorm(w)));
   const src=pool.length?pool:R.words;
   return src[Math.floor(Math.random()*src.length)];
 }
